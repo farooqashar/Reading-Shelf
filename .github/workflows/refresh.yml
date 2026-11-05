@@ -1,7 +1,7 @@
 # Safety net: rebuilds the site once a day (and on demand) so it never drifts
 # far from the vault, even if the vault-side workflow is missing or fails.
 #
-# Needs a repo secret VERCEL_DEPLOY_HOOK (Vercel → Project → Settings → Git → Deploy Hooks).
+# Needs a repo secret DEPLOY_HOOK (a build hook URL from Netlify or Vercel).
 name: Refresh from vault
 
 on:
@@ -22,9 +22,9 @@ jobs:
           node-version: 22
       - run: npm ci || npm install
       - run: npm run build
-      - name: Trigger Vercel deploy
+      - name: Trigger deploy
         env:
-          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+          HOOK: ${{ secrets.DEPLOY_HOOK }}
         run: |
-          if [ -z "$HOOK" ]; then echo "VERCEL_DEPLOY_HOOK not set; skipping deploy"; exit 0; fi
+          if [ -z "$HOOK" ]; then echo "DEPLOY_HOOK not set; skipping deploy"; exit 0; fi
           curl -fsS -X POST "$HOOK"

@@ -11,7 +11,7 @@ article text stays in the vault.
 ## How it works
 
 ```
-Obsidian ──obsidian-git push──▶ vault repo ──GitHub Action──▶ Vercel deploy hook
+Obsidian ──obsidian-git push──▶ vault repo ──GitHub Action──▶ build hook (Netlify/Vercel)
                                                                      │
                        site repo (this) ◀── build clones the vault ──┘
                                                 │
@@ -20,8 +20,8 @@ Obsidian ──obsidian-git push──▶ vault repo ──GitHub Action──�
 
 - `scripts/build.mjs` shallow-clones the vault, reads every note under `Clippings/`,
   and writes `dist/` (static site + `data.json` + an RSS `feed.xml`).
-- `vault-workflow/notify-reading-site.yml` goes in the **vault** repo and pings the Vercel
-  deploy hook whenever something under `Clippings/` changes.
+- `vault-workflow/notify-reading-site.yml` goes in the **vault** repo and pings the host's
+  build hook whenever something under `Clippings/` changes.
 - `.github/workflows/refresh.yml` in **this** repo rebuilds daily as a safety net.
 
 ## Run it locally
@@ -32,11 +32,21 @@ npm run dev                       # clones the vault from GitHub, builds, serves
 VAULT_DIR=~/path/to/vault npm run dev   # or build from a local copy of the vault
 ```
 
-## Deploy (Vercel)
+## Deploy
 
-1. Import this repo in Vercel. `vercel.json` already sets the build command and `dist/` output.
-2. Vercel → Project → Settings → Git → **Deploy Hooks** → create one for `main`. Copy the URL.
-3. Add that URL as a secret named `VERCEL_DEPLOY_HOOK` in **both** repos
+It's a static site, so any static host works. Configs are included for Netlify and Vercel.
+
+**Netlify**
+1. Add new site → Import from Git → pick this repo. `netlify.toml` sets the build
+   (`npm run build`, publish `dist`, Node 22).
+2. Site configuration → Build & deploy → **Build hooks** → add one for `main`. Copy the URL.
+
+**Vercel**
+1. Import this repo. `vercel.json` sets the build command and `dist/` output.
+2. Project → Settings → Git → **Deploy Hooks** → create one for `main`. Copy the URL.
+
+**Then, for either host**
+3. Add the hook URL as a secret named `DEPLOY_HOOK` in **both** repos
    (Settings → Secrets and variables → Actions).
 4. Copy `vault-workflow/notify-reading-site.yml` into the vault repo at
    `.github/workflows/notify-reading-site.yml` and push.
