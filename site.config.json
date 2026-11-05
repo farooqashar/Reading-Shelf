@@ -2,7 +2,7 @@
   "vaultRepo": "farooqashar/ashar-obsidian-vault",
   "vaultBranch": "main",
   "includeFolders": ["Clippings"],
-  "siteUrl": "https://reading.asharfarooq.xyz",
+  "siteUrl": "https://ashar-reading-shelf.netlify.app",
   "owner": "Ashar",
 
   "categories": {
