@@ -1,0 +1,30 @@
+# Safety net: rebuilds the site once a day (and on demand) so it never drifts
+# far from the vault, even if the vault-side workflow is missing or fails.
+#
+# Needs a repo secret VERCEL_DEPLOY_HOOK (Vercel → Project → Settings → Git → Deploy Hooks).
+name: Refresh from vault
+
+on:
+  schedule:
+    - cron: "17 11 * * *" # daily, ~6-7am New York
+  workflow_dispatch:
+  repository_dispatch:
+    types: [vault-updated]
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the build still works
+        uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci || npm install
+      - run: npm run build
+      - name: Trigger Vercel deploy
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then echo "VERCEL_DEPLOY_HOOK not set; skipping deploy"; exit 0; fi
+          curl -fsS -X POST "$HOOK"

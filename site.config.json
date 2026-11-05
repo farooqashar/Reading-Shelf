@@ -1,0 +1,27 @@
+{
+  "vaultRepo": "farooqashar/ashar-obsidian-vault",
+  "vaultBranch": "main",
+  "includeFolders": ["Clippings"],
+  "siteUrl": "https://reading.asharfarooq.xyz",
+  "owner": "Ashar",
+
+  "categories": {
+    "AI-Agents": "AI & agents",
+    "Infra-DevOps": "Infra & DevOps",
+    "Companies-Products": "Products & companies",
+    "Reading": "Essays & long reads",
+    "Fun-Curiosities": "Fun & curiosities",
+    "NYC-Local": "New York",
+    "Misc": "Miscellany",
+    "_root": "Just clipped"
+  },
+
+  "exclude": {
+    "folders": [],
+    "domains": ["sant.ai"],
+    "titleContains": ["Page Not Found"],
+    "tags": ["private", "draft"]
+  },
+
+  "hiddenTags": ["clippings"]
+}

@@ -1,0 +1,28 @@
+# Copy this file into the VAULT repo at:
+#   ashar-obsidian-vault/.github/workflows/notify-reading-site.yml
+#
+# Every time obsidian-git pushes a change under Clippings/, this pings the
+# reading site's Vercel deploy hook, which rebuilds the site from the latest vault.
+#
+# Needs a secret in the vault repo: VERCEL_DEPLOY_HOOK (same URL as the site repo's).
+name: Update reading site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Clippings/**"
+  workflow_dispatch:
+
+concurrency:
+  group: reading-site
+  cancel-in-progress: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel deploy
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: curl -fsS -X POST "$HOOK"

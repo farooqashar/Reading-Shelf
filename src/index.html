@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ashar's Reading Shelf</title>
+  <meta name="description" content="Everything Ashar has saved from the web — essays, tools, docs and curiosities — updated straight from his notes." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="alternate" type="application/rss+xml" title="What Ashar has been reading" href="feed.xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Schibsted+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="masthead">
+    <h1>What Ashar has been reading</h1>
+    <p class="lede" id="lede">Loading the shelf…</p>
+  </header>
+
+  <section class="shelf-wrap" aria-label="Bookshelf of every saved page, by month">
+    <div class="shelf" id="shelf"></div>
+    <ul class="legend" id="legend" aria-label="Filter by topic"></ul>
+  </section>
+
+  <main class="log">
+    <div class="controls">
+      <label class="search">
+        <span class="visually-hidden">Search titles, sites and tags</span>
+        <input id="q" type="search" placeholder="Search titles, sites and tags" autocomplete="off" />
+      </label>
+      <div class="sort" role="group" aria-label="Sort order">
+        <button type="button" data-sort="new" aria-pressed="true">Newest</button>
+        <button type="button" data-sort="old" aria-pressed="false">Oldest</button>
+      </div>
+    </div>
+    <p class="status" id="status" aria-live="polite"></p>
+    <div id="list"></div>
+  </main>
+
+  <footer class="foot">
+    <p id="foot"></p>
+    <nav class="foot-links"><a href="feed.xml">RSS feed</a><a href="https://ashar.vercel.app">ashar.vercel.app</a></nav>
+  </footer>
+
+  <div class="tip" id="tip" role="tooltip" hidden></div>
+  <script src="app.js" type="module"></script>
+</body>
+</html>
