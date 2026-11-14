@@ -62,7 +62,7 @@ Edit `site.config.json`:
 | `exclude.domains` | Any clipping whose link or title mentions the domain (e.g. `sant.ai`) |
 | `exclude.titleContains` | Titles containing a phrase |
 | `exclude.folders` | Whole vault folders (e.g. `"NYC-Local"`) |
-| `exclude.tags` | Notes tagged `private` or `draft` |
+| `exclude.tags` | Notes tagged `private` or `draft` (a leading `#` and letter case are ignored, so `#Private` counts) |
 
 Or, per note, add `publish: false` to its frontmatter in Obsidian.
 

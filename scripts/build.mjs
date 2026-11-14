@@ -69,6 +69,12 @@ const stripLink = (s) => String(s).replace(/^\[\[|\]\]$/g, "").trim();
 
 const toList = (v) => (Array.isArray(v) ? v : v ? [v] : []).filter(Boolean).map(String);
 
+// Tags compare without a leading "#" and case-insensitively, so `#Private`
+// matches `private` in exclude.tags and hiddenTags.
+const normTag = (t) => String(t).trim().replace(/^#/, "").toLowerCase();
+const hiddenTags = config.hiddenTags.map(normTag);
+const excludedTags = config.exclude.tags.map(normTag);
+
 function domainOf(url) {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
@@ -103,7 +109,7 @@ function parseNote(file, vaultDir) {
   const domain = url ? domainOf(url) : null;
   const allTags = toList(data.tags);
   const tags = allTags
-    .filter((t) => !t.startsWith("[[") && !config.hiddenTags.includes(t))
+    .filter((t) => !t.startsWith("[[") && !hiddenTags.includes(normTag(t)))
     .map((t) => t.replace(/^#/, ""));
   const authors = toList(data.author).map(stripLink).filter(Boolean);
   const words = content.split(/\s+/).filter(Boolean).length;
@@ -136,7 +142,7 @@ function isExcluded(n) {
   if (ex.domains.some((d) => (n.domain && (n.domain === d || n.domain.endsWith("." + d))) || haystack.includes(d.toLowerCase())))
     return true;
   if (ex.titleContains.some((s) => n.title.toLowerCase().includes(s.toLowerCase()))) return true;
-  if (n._allTags.some((t) => ex.tags.includes(t))) return true;
+  if (n._allTags.some((t) => excludedTags.includes(normTag(t)))) return true;
   return false;
 }
 
