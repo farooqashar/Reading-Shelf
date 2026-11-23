@@ -9,6 +9,7 @@
 // full clipped article text, which belongs to its original authors.
 
 import { execFileSync } from "node:child_process";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -97,6 +98,12 @@ function plainExcerpt(md, max = 220) {
   return text.slice(0, max).replace(/\s+\S*$/, "") + "…";
 }
 
+// A clipping's id is a hash of its vault-relative path, so it stays the same
+// when other clippings are added. It is the feed's <guid> and an HTML id, so it
+// starts with a letter.
+const stableId = (rel) =>
+  "c" + crypto.createHash("sha1").update(rel.split(path.sep).join("/")).digest("hex").slice(0, 10);
+
 function parseNote(file, vaultDir) {
   const rel = path.relative(vaultDir, file);
   const parts = rel.split(path.sep);
@@ -116,6 +123,7 @@ function parseNote(file, vaultDir) {
   const description = data.description ? String(data.description).trim() : "";
 
   return {
+    id: stableId(rel),
     title,
     url,
     domain,
@@ -198,7 +206,13 @@ function main() {
   const items = kept
     .filter((n) => n.created)
     .sort((a, b) => b.created.localeCompare(a.created) || a.title.localeCompare(b.title))
-    .map(({ publish, _allTags, ...n }, i) => ({ id: `c${i}`, ...n }));
+    .map(({ publish, _allTags, ...n }) => n);
+
+  const seen = new Set();
+  for (const n of items) {
+    if (seen.has(n.id)) throw new Error(`Duplicate clipping id ${n.id} ("${n.title}")`);
+    seen.add(n.id);
+  }
 
   const categories = Object.entries(config.categories)
     .map(([key, label]) => ({ key, label, count: items.filter((n) => n.category === key).length }))
