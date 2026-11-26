@@ -5,8 +5,10 @@ A small static site that shows everything I've clipped into my Obsidian vault
 a bookshelf of every page (one spine per clipping, colored by topic, grouped by month),
 followed by a searchable, filterable reading log. It rebuilds itself whenever the vault changes.
 
-Only metadata is published — title, link, site, description, tags and dates. The clipped
-article text stays in the vault.
+Only metadata is published — title, link, site, description, tags and dates. The full
+clipped article text stays in the vault. The description is the note's frontmatter
+`description`; a note without one gets the first ~220 characters of its text as its
+description (on the site, in search and in the RSS feed) unless `excerptFallback` is off.
 
 ## How it works
 
@@ -65,6 +67,12 @@ Edit `site.config.json`:
 | `exclude.tags` | Notes tagged `private` or `draft` (a leading `#` and letter case are ignored, so `#Private` counts) |
 
 Or, per note, add `publish: false` to its frontmatter in Obsidian.
+
+Each published clipping's description is its frontmatter `description`. When a note has
+none, the build uses the first ~220 characters of the note's text instead (code blocks,
+images, links and headings stripped), and that excerpt is shown on the site, searchable and
+sent out in `feed.xml`. Set `"excerptFallback": false` in `site.config.json` to publish an
+empty description for those notes, so no note text leaves the vault.
 
 Folder names map to the labels and colors on the site via `categories` in the config; a new
 vault folder shows up automatically with its folder name until you give it a label (and a

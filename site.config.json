@@ -23,5 +23,7 @@
     "tags": ["private", "draft"]
   },
 
-  "hiddenTags": ["clippings"]
+  "hiddenTags": ["clippings"],
+
+  "excerptFallback": true
 }
