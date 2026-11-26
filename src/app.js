@@ -50,12 +50,21 @@ async function load() {
 function renderIntro() {
   const items = data.items;
   const oldest = items[items.length - 1]?.created;
-  const thisMonth = monthKey(items[0]?.created || "");
-  const recent = items.filter((n) => monthKey(n.created) === thisMonth).length;
+  const latestMonth = monthKey(items[0]?.created || "");
+  const recent = items.filter((n) => monthKey(n.created) === latestMonth).length;
+  const now = new Date();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  // the newest clipping's month may have ended; don't call it "so far"
+  let tally = `${recent} so far in ${monthName(latestMonth)}.`;
+  if (latestMonth !== thisMonth) {
+    const { y, m } = parts(latestMonth + "-01");
+    const last = y === now.getFullYear() ? MONTHS[m - 1] : monthName(latestMonth);
+    tally = `Nothing new yet in ${monthName(thisMonth)}; ${recent} saved in ${last}.`;
+  }
   const synced = prettyDate(data.vault.date.slice(0, 10));
   $("#lede").textContent =
     `${items.length} pages saved from the web since ${oldest ? monthName(monthKey(oldest)) : "the start"} — ` +
-    `essays, tools, docs and the odd curiosity. ${recent} so far in ${monthName(thisMonth)}.`;
+    `essays, tools, docs and the odd curiosity. ${tally}`;
   $("#foot").textContent = `Pulled from Ashar’s Obsidian vault, last synced ${synced}.`;
 }
 
