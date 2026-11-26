@@ -70,6 +70,8 @@ function renderShelf() {
   const logs = data.items.map((n) => Math.log(Math.max(n.words, 20)));
   const lo = Math.min(...logs);
   const span = Math.max(...logs) - lo || 1;
+  // roving tabindex: the shelf is one tab stop, starting on the newest spine
+  const last = data.items.length - 1;
   let i = 0;
   const html = [...byMonth]
     .map(([k, list]) => {
@@ -78,8 +80,9 @@ function renderShelf() {
         .map((n) => {
           const s = (Math.log(Math.max(n.words, 20)) - lo) / span;
           const wide = n.category === "Reading";
+          const tab = i === last ? 0 : -1;
           return `<button class="spine${wide ? " wide" : ""}" type="button" data-id="${n.id}" data-cat="${esc(n.category)}"
-            style="--s:${s.toFixed(3)};--i:${i++}" aria-label="${esc(n.title)}">${wide ? `<span>${esc(n.title)}</span>` : ""}</button>`;
+            tabindex="${tab}" style="--s:${s.toFixed(3)};--i:${i++}" aria-label="${esc(n.title)}">${wide ? `<span>${esc(n.title)}</span>` : ""}</button>`;
         })
         .join("");
       return `<div class="month"><div class="month-books">${books}</div>
@@ -210,7 +213,23 @@ function bind() {
   const shelf = $("#shelf");
   shelf.addEventListener("pointerover", (e) => e.target.closest(".spine") && showTip(e.target.closest(".spine")));
   shelf.addEventListener("pointerout", hideTip);
-  shelf.addEventListener("focusin", (e) => e.target.closest(".spine") && showTip(e.target.closest(".spine")));
+  shelf.addEventListener("focusin", (e) => {
+    const s = e.target.closest(".spine");
+    if (!s) return;
+    shelf.querySelectorAll('.spine[tabindex="0"]').forEach((x) => x !== s && (x.tabIndex = -1));
+    s.tabIndex = 0;
+    showTip(s);
+  });
+  shelf.addEventListener("keydown", (e) => {
+    const s = e.target.closest(".spine");
+    if (!s) return;
+    const spines = [...shelf.querySelectorAll(".spine")];
+    const at = spines.indexOf(s);
+    const to = { ArrowLeft: at - 1, ArrowRight: at + 1, Home: 0, End: spines.length - 1 }[e.key];
+    if (to === undefined) return;
+    e.preventDefault();
+    spines[Math.max(0, Math.min(spines.length - 1, to))].focus();
+  });
   shelf.addEventListener("focusout", hideTip);
   shelf.addEventListener("scroll", hideTip, { passive: true });
   shelf.addEventListener("click", (e) => {
