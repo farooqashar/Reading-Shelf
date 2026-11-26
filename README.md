@@ -19,7 +19,9 @@ Obsidian ──obsidian-git push──▶ vault repo ──GitHub Action──�
 ```
 
 - `scripts/build.mjs` shallow-clones the vault, reads every note under `Clippings/`,
-  and writes `dist/` (static site + `data.json` + an RSS `feed.xml`).
+  and writes `dist/` (static site + `data.json` + an RSS `feed.xml`). A clipping needs a
+  `created: YYYY-MM-DD` date to appear; the build names any note it skips for lacking one,
+  and fails without writing `dist/` if it finds no clippings.
 - `vault-workflow/notify-reading-site.yml` goes in the **vault** repo and pings the host's
   build hook whenever something under `Clippings/` changes.
 - `.github/workflows/refresh.yml` in **this** repo rebuilds daily as a safety net.
