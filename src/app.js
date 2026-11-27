@@ -43,8 +43,38 @@ async function load() {
   renderIntro();
   renderShelf();
   renderLegend();
+  readUrl();
   bind();
   apply();
+}
+
+// ?topic=<category key>&tag=<tag>&q=<search>&sort=old, defaults omitted
+function readUrl() {
+  const p = new URLSearchParams(location.search);
+  const topic = p.get("topic");
+  const tag = p.get("tag");
+  const q = (p.get("q") || "").trim();
+  if (topic && topic in catLabel) state.cat = topic;
+  if (tag && data.items.some((n) => n.tags.includes(tag))) state.tag = tag;
+  state.q = q.toLowerCase();
+  if (p.get("sort") === "old") state.sort = "old";
+  $("#q").value = q;
+  syncSort();
+}
+
+function writeUrl() {
+  const p = new URLSearchParams();
+  if (state.cat) p.set("topic", state.cat);
+  if (state.tag) p.set("tag", state.tag);
+  if (state.q) p.set("q", $("#q").value.trim());
+  if (state.sort !== "new") p.set("sort", state.sort);
+  const qs = p.toString();
+  const url = location.pathname + (qs ? `?${qs}` : "") + location.hash;
+  if (url !== location.pathname + location.search + location.hash) history.replaceState(null, "", url);
+}
+
+function syncSort() {
+  document.querySelectorAll(".sort button").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.sort === state.sort)));
 }
 
 function renderIntro() {
@@ -182,6 +212,7 @@ function apply() {
   $("#status").innerHTML = filters.length
     ? `Showing ${shown.length} of ${data.items.length} for ${filters.map(esc).join(" + ")}. <button type="button" id="clear">Clear filters</button>`
     : "";
+  writeUrl();
 }
 
 function clearFilters() {
@@ -269,7 +300,7 @@ function bind() {
     const b = e.target.closest("button");
     if (!b) return;
     state.sort = b.dataset.sort;
-    document.querySelectorAll(".sort button").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+    syncSort();
     apply();
   });
 
@@ -282,6 +313,8 @@ function bind() {
     }
     if (e.target.id === "clear") {
       clearFilters();
+      state.sort = "new";
+      syncSort();
       apply();
     }
   });
