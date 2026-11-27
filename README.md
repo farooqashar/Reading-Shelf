@@ -21,7 +21,8 @@ Obsidian ──obsidian-git push──▶ vault repo ──GitHub Action──�
 - `scripts/build.mjs` shallow-clones the vault, reads every note under `Clippings/`,
   and writes `dist/` (static site + `data.json` + an RSS `feed.xml`). A clipping needs a
   `created: YYYY-MM-DD` date to appear; the build names any note it skips for lacking one,
-  and fails without writing `dist/` if it finds no clippings.
+  and fails without writing `dist/` if it ends up with no clippings to publish, so a broken
+  vault checkout can't wipe the site (see [Emptying the shelf](#emptying-the-shelf)).
 - `vault-workflow/notify-reading-site.yml` goes in the **vault** repo and pings the host's
   build hook whenever something under `Clippings/` changes.
 - `.github/workflows/refresh.yml` in **this** repo rebuilds daily as a safety net.
@@ -71,3 +72,12 @@ Or, per note, add `publish: false` to its frontmatter in Obsidian.
 Folder names map to the labels and colors on the site via `categories` in the config; a new
 vault folder shows up automatically with its folder name until you give it a label (and a
 color in `src/styles.css`, under "topic colors").
+
+## Emptying the shelf
+
+If every clipping ends up hidden (by the settings above, `publish: false`, or a missing
+`created` date), the build fails on purpose and the host keeps serving the last build. To
+publish an empty shelf deliberately, set the environment variable `ALLOW_EMPTY_SHELF=1` in
+the host's build settings (Netlify: Site configuration → Environment variables; Vercel:
+Settings → Environment Variables) and rebuild, or run `ALLOW_EMPTY_SHELF=1 npm run build`
+locally. Remove it again afterwards so the guard is back on.

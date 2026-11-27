@@ -218,10 +218,15 @@ function main() {
   const items = kept
     .sort((a, b) => b.created.localeCompare(a.created) || a.title.localeCompare(b.title))
     .map(({ rel, publish, _allTags, ...n }) => n);
-  // Fail rather than deploy an empty shelf, so the host keeps the last good build.
+  // Fail rather than deploy an empty shelf, so a broken vault checkout can't
+  // wipe the site and the host keeps the last good build. ALLOW_EMPTY_SHELF=1
+  // lets an empty shelf through, e.g. after hiding every note on purpose.
   if (items.length === 0) {
     const where = config.includeFolders.map((f) => `${f}/`).join(", ");
-    throw new Error(`No clippings found under ${where} in ${source}`);
+    const why = `No clippings to publish under ${where} in ${source} (${parsed.length} found, ${skipped} excluded, ${undated.length} without a date)`;
+    if (process.env.ALLOW_EMPTY_SHELF !== "1")
+      throw new Error(`${why}. To publish an empty shelf on purpose, set ALLOW_EMPTY_SHELF=1.`);
+    console.warn(`${why}; publishing an empty shelf because ALLOW_EMPTY_SHELF=1.`);
   }
 
   const seen = new Set();
