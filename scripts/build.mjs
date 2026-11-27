@@ -62,11 +62,15 @@ function walk(dir) {
   return out;
 }
 
+// A YYYY-MM-DD date, or null unless it is a real calendar day (so "2026-13-05"
+// and "2026-02-30" are rejected rather than published).
 const asDate = (v) => {
   if (!v) return null;
-  if (v instanceof Date && !isNaN(v)) return v.toISOString().slice(0, 10);
-  const m = String(v).match(/\d{4}-\d{2}-\d{2}/);
-  return m ? m[0] : null;
+  if (v instanceof Date) return isNaN(v) ? null : v.toISOString().slice(0, 10);
+  const m = String(v).match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  return !isNaN(d) && d.toISOString().slice(0, 10) === m[0] ? m[0] : null;
 };
 
 const stripLink = (s) => String(s).replace(/^\[\[|\]\]$/g, "").trim();
@@ -200,19 +204,36 @@ function main() {
   const vaultDir = getVault();
   const commit = vaultCommit(vaultDir);
 
-  const files = config.includeFolders.flatMap((f) => {
-    const p = path.join(vaultDir, f);
-    return fs.existsSync(p) ? walk(p) : [];
+  const source = process.env.VAULT_DIR ? vaultDir : config.vaultRepo;
+  const folders = config.includeFolders.filter((f) => {
+    const exists = fs.existsSync(path.join(vaultDir, f));
+    if (!exists) console.warn(`Include folder ${f}/ not found in ${source}`);
+    return exists;
   });
+  const files = folders.flatMap((f) => walk(path.join(vaultDir, f)));
 
-  const parsed = files.map((f) => parseNote(f, vaultDir));
-  const kept = parsed.filter((n) => !isExcluded(n));
-  const skipped = parsed.length - kept.length;
+  const parsed = files.map((f) => ({ rel: path.relative(vaultDir, f).split(path.sep).join("/"), ...parseNote(f, vaultDir) }));
+  const notExcluded = parsed.filter((n) => !isExcluded(n));
+  const skipped = parsed.length - notExcluded.length;
+  // No date is guessed from `published` or file times: `published` is the
+  // article's date, and a shallow clone gives every file the same time.
+  const undated = notExcluded.filter((n) => !n.created);
+  for (const n of undated) console.warn(`Skipped ${n.rel}: no valid "created" date`);
+  const kept = notExcluded.filter((n) => n.created);
 
   const items = kept
-    .filter((n) => n.created)
     .sort((a, b) => b.created.localeCompare(a.created) || a.title.localeCompare(b.title))
-    .map(({ publish, _allTags, ...n }) => n);
+    .map(({ rel, publish, _allTags, ...n }) => n);
+  // Fail rather than deploy an empty shelf, so a broken vault checkout can't
+  // wipe the site and the host keeps the last good build. ALLOW_EMPTY_SHELF=1
+  // lets an empty shelf through, e.g. after hiding every note on purpose.
+  if (items.length === 0) {
+    const where = config.includeFolders.map((f) => `${f}/`).join(", ");
+    const why = `No clippings to publish under ${where} in ${source} (${parsed.length} found, ${skipped} excluded, ${undated.length} without a date)`;
+    if (process.env.ALLOW_EMPTY_SHELF !== "1")
+      throw new Error(`${why}. To publish an empty shelf on purpose, set ALLOW_EMPTY_SHELF=1.`);
+    console.warn(`${why}; publishing an empty shelf because ALLOW_EMPTY_SHELF=1.`);
+  }
 
   const seen = new Set();
   for (const n of items) {
@@ -243,7 +264,7 @@ function main() {
   fs.writeFileSync(path.join(dist, "data.json"), JSON.stringify(data));
   fs.writeFileSync(path.join(dist, "feed.xml"), feed(items, commit.date));
 
-  console.log(`Built ${items.length} clippings (${skipped} excluded) from vault ${commit.sha ?? "(local)"} → dist/`);
+  console.log(`Built ${items.length} clippings (${skipped} excluded, ${undated.length} without a date) from vault ${commit.sha ?? "(local)"} → dist/`);
 }
 
 main();
