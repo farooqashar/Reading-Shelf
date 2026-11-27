@@ -6,7 +6,10 @@
 // 3. Writes dist/ with the static site, data.json and feed.xml.
 //
 // Only metadata (title, link, description, tags, dates) is published — never the
-// full clipped article text, which belongs to its original authors.
+// full clipped article text, which belongs to its original authors. The
+// description is the frontmatter `description`; a note without one gets the
+// first ~220 characters of its text instead, unless `excerptFallback` is false
+// in site.config.json, in which case its description is empty.
 
 import { execFileSync } from "node:child_process";
 import crypto from "node:crypto";
@@ -75,6 +78,9 @@ const toList = (v) => (Array.isArray(v) ? v : v ? [v] : []).filter(Boolean).map(
 const normTag = (t) => String(t).trim().replace(/^#/, "").toLowerCase();
 const hiddenTags = config.hiddenTags.map(normTag);
 const excludedTags = config.exclude.tags.map(normTag);
+// On unless set to false: notes without a frontmatter description publish an
+// excerpt of their text.
+const excerptFallback = config.excerptFallback !== false;
 
 function domainOf(url) {
   try {
@@ -130,7 +136,7 @@ function parseNote(file, vaultDir) {
     authors,
     published: asDate(data.published),
     created: asDate(data.created),
-    description: description || plainExcerpt(content),
+    description: description || (excerptFallback ? plainExcerpt(content) : ""),
     tags,
     category: folder,
     words,
